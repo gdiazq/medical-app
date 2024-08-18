@@ -15,6 +15,8 @@ import express from 'express'
 import compression from 'compression'
 import { renderPage } from 'vike/server'
 import { root } from './root.js'
+import cookieParser from 'cookie-parser';
+import bodyParser from 'body-parser';
 const isProduction = process.env.NODE_ENV === 'production'
 
 startServer()
@@ -23,17 +25,14 @@ async function startServer() {
   const app = express()
 
   app.use(compression())
+  app.use(cookieParser());
+  app.use(express.json());
+  app.use(bodyParser.urlencoded({ extended: true }));
 
-  // Vite integration
   if (isProduction) {
-    // In production, we need to serve our static assets ourselves.
-    // (In dev, Vite's middleware serves our static assets.)
     const sirv = (await import('sirv')).default
     app.use(sirv(`${root}/dist/client`))
   } else {
-    // We instantiate Vite's development server and integrate its middleware to our server.
-    // ⚠️ We instantiate it only in development. (It isn't needed in production and it
-    // would unnecessarily bloat our production server.)
     const vite = await import('vite')
     const viteDevMiddleware = (
       await vite.createServer({
@@ -44,12 +43,6 @@ async function startServer() {
     app.use(viteDevMiddleware)
   }
 
-  // ...
-  // Other middlewares (e.g. some RPC middleware such as Telefunc)
-  // ...
-
-  // Vike middleware. It should always be our last middleware (because it's a
-  // catch-all middleware superseding any middleware placed after it).
   app.get('*', async (req, res, next) => {
     const pageContextInit = {
       urlOriginal: req.originalUrl,
@@ -67,10 +60,28 @@ async function startServer() {
       if (res.writeEarlyHints) res.writeEarlyHints({ link: earlyHints.map((e) => e.earlyHintLink) })
       headers.forEach(([name, value]) => res.setHeader(name, value))
       res.status(statusCode)
-      // For HTTP streams use httpResponse.pipe() instead, see https://vike.dev/streaming
       res.send(body)
     }
   })
+
+  app.post('/api/rut/validate', async (req, res) => {
+    try {
+      const { rut } = req.body
+      const response = await fetch(`http://rec-staging.recemed.cl/api/users/exists?rut=${rut}`);
+      const user = await response.json();
+      if (user?.data) {
+        res.cookie('rut', rut, {
+          maxAge: 24 * 60 * 60 * 1000,
+          httpOnly: true
+        })
+        res.redirect('/login');
+      } else {
+        console.log('Rut inválido. Por favor, verifica tu rut e intenta nuevamente.')
+      }
+    } catch (error) {
+      console.error(error)
+    }
+  });
 
   const port = process.env.PORT || 3000
   app.listen(port)
