@@ -44,10 +44,14 @@ async function startServer() {
   }
 
   app.get('*', async (req, res, next) => {
+    const logged = !!req.cookies['token']; 
     const pageContextInit = {
       urlOriginal: req.originalUrl,
-      headersOriginal: req.headers
-    }
+      headersOriginal: req.headers,
+      user: {
+        logged,
+      },
+    };
     const pageContext = await renderPage(pageContextInit)
     if (pageContext.errorWhileRendering) {
       // Install error tracking here, see https://vike.dev/errors
@@ -80,6 +84,40 @@ async function startServer() {
       }
     } catch (error) {
       console.error(error)
+    }
+  });
+
+  app.post('/api/login/validate', async (req, res) => {
+    try {
+      const { rut } = req.cookies;
+      const { password } = req.body;
+    
+      const response = await fetch("http://rec-staging.recemed.cl/api/users/log_in", {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ user: { rut, password } })
+      });
+      const user = await response.json();
+    
+      if (user?.errors) {
+        res.redirect('/');
+      } else if (user?.data) {
+        const { token, profiles } = user.data;
+    
+        res.cookie('token', token, {
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+
+        res.cookie('user-data', JSON.stringify(profiles), {
+          maxAge: 24 * 60 * 60 * 1000,
+        });
+
+        res.redirect('/dashboard');
+      }
+    } catch (error) {
+      console.error(error);
     }
   });
 
