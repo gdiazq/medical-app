@@ -18,7 +18,7 @@ function Page() {
                         />
                         <button
                             type="submit"
-                            className="font-semibold text-[white] tracking-wider bg-rm-blue-100 hover:bg-rm-blue-200 p-2 rounded-tl-full rounded-tr-full rounded-br-full rounded-bl-full mt-4 w-full">
+                            className="font-semibold text-white tracking-wider bg-rm-blue-100 hover:bg-rm-blue-200 p-2 rounded-tl-full rounded-tr-full rounded-br-full rounded-bl-full mt-4 w-full">
                                 INGRESAR
                         </button>
                     </form>
