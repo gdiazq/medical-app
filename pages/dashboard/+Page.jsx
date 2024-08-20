@@ -54,34 +54,18 @@ function Page() {
         }
     };
 
-    const handleSearch = () => {
-        // Al hacer clic en el botón de búsqueda, se actualiza el estado de las recetas filtradas
-        const filtered = recipes.filter(recipe => {
-            return recipe.folio.toString().includes(searchTerm);
-        });
-        setFilteredRecipes(filtered);
-    };
-
     const patientName = recipes.length > 0 ? `${recipes[0].patient.first_name} ${recipes[0].patient.last_name}` : "Paciente";
 
     return (
         <>
-            <header className="flex justify-end p-4 bg-gray-100">
-                <div className="p-4 flex items-center">
-                    <input
-                        type="text"
-                        placeholder="Buscar por folio..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="border rounded p-2 w-full"
-                    />
-                    <button 
-                        onClick={handleSearch} 
-                        className="ml-2 bg-rm-blue-100 text-white py-2 px-4 rounded"
-                    >
-                        Buscar
-                    </button>
-            </div>
+            <header className="flex justify-end items-center p-4 gap-x-4 bg-gray-100">
+                <input
+                    type="text"
+                    placeholder="Buscar por folio..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="border rounded p-2 w-48"
+                />
                 <p className="font-bold">{patientName}</p>
             </header>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-[1440px] mx-auto p-4">
